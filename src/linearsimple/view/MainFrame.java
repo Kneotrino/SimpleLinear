@@ -5,6 +5,7 @@
  */
 package linearsimple.view;
 
+import linearsimple.model.RegresiLinear;
 import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -13,14 +14,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.TableCellEditor;
+import linearsimple.controller.DataController;
+import linearsimple.model.Data;
 import linearsimple.model.DataClass;
+import myutils.gui.TablePopupEditor;
 
 /**
  *
@@ -33,6 +39,7 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public MainFrame() {
         initComponents();
+        initSetup();
     }
 
     /**
@@ -45,25 +52,33 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
-        listDataLatih = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(new LinkedList<>()); ;
-        listDataUji = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(new LinkedList<>()); ;
-        listDataPrediksi = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(new LinkedList<>()); ;
+        entityManager = java.beans.Beans.isDesignTime() ? null : javax.persistence.Persistence.createEntityManagerFactory("sederhana?zeroDateTimeBehavior=convertToNullPU").createEntityManager();
+        dataQuery = java.beans.Beans.isDesignTime() ? null : entityManager.createQuery("SELECT d FROM Data d");
+        listData = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(dataQuery.getResultList());
+        listDataUji = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(dataQuery.getResultList());
+        listLinear = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(new LinkedList<>()); ;
+        listDataPrediksi = java.beans.Beans.isDesignTime() ? java.util.Collections.emptyList() : org.jdesktop.observablecollections.ObservableCollections.observableList(dataQuery.getResultList());
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         TableLatih = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
         TableUji = new javax.swing.JTable();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        TableUji1 = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
         jPanel3 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        jButton9 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -75,11 +90,8 @@ public class MainFrame extends javax.swing.JFrame {
         TableLatih.setAutoCreateRowSorter(true);
         TableLatih.setRowHeight(25);
 
-        org.jdesktop.swingbinding.JTableBinding jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listDataLatih, TableLatih);
-        org.jdesktop.swingbinding.JTableBinding.ColumnBinding columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${nomor}"));
-        columnBinding.setColumnName("Nomor");
-        columnBinding.setColumnClass(Integer.class);
-        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataX}"));
+        org.jdesktop.swingbinding.JTableBinding jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listData, TableLatih);
+        org.jdesktop.swingbinding.JTableBinding.ColumnBinding columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataX}"));
         columnBinding.setColumnName("Data X");
         columnBinding.setColumnClass(Double.class);
         columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataY}"));
@@ -94,9 +106,6 @@ public class MainFrame extends javax.swing.JFrame {
         jScrollPane2.setBorder(javax.swing.BorderFactory.createTitledBorder("Data Uji"));
 
         jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listDataUji, TableUji);
-        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${nomor}"));
-        columnBinding.setColumnName("Nomor");
-        columnBinding.setColumnClass(Integer.class);
         columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataX}"));
         columnBinding.setColumnName("Data X");
         columnBinding.setColumnClass(Double.class);
@@ -109,18 +118,114 @@ public class MainFrame extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPane2);
 
+        jScrollPane5.setBorder(javax.swing.BorderFactory.createTitledBorder("Data Uji"));
+
+        jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listDataPrediksi, TableUji1);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataId}"));
+        columnBinding.setColumnName("Data Id");
+        columnBinding.setColumnClass(Integer.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataX}"));
+        columnBinding.setColumnName("Data X");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${dataY}"));
+        columnBinding.setColumnName("Data Y");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${prediksiY}"));
+        columnBinding.setColumnName("Prediksi Y");
+        columnBinding.setColumnClass(Double.class);
+        bindingGroup.addBinding(jTableBinding);
+        jTableBinding.bind();
+        jScrollPane5.setViewportView(TableUji1);
+
+        jPanel1.add(jScrollPane5);
+
         jTabbedPane1.addTab("Data", jPanel1);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 799, Short.MAX_VALUE)
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        jPanel2.setLayout(new java.awt.GridLayout(2, 0));
+
+        jTable1.setRowHeight(25);
+        jTable1.setDefaultEditor(Double.class, new TablePopupEditor());
+        jTable2.setDefaultEditor(Double.class, new TablePopupEditor());
+
+        //DecimalFormat df = new DecimalFormat ("0.##");
+        //JFormattedTextField fmtTxtField = new JFormattedTextField(df);
+        //TableCellEditor cellEditor = new DefaultCellEditor(fmtTxtField);
+        //
+        //jTable1.setDefaultEditor(Double.class, new DefaultCellEditor(fmtTxtField));
+        //jTable2.setDefaultEditor(Double.class, new DefaultCellEditor(fmtTxtField));
+
+        jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listLinear, jTable1);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${beta0String}"));
+        columnBinding.setColumnName("Beta0 String");
+        columnBinding.setColumnClass(String.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${beta1String}"));
+        columnBinding.setColumnName("Beta1 String");
+        columnBinding.setColumnClass(String.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${beta0}"));
+        columnBinding.setColumnName("Beta0");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${beta1}"));
+        columnBinding.setColumnName("Beta1");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${df}"));
+        columnBinding.setColumnName("Df");
+        columnBinding.setColumnClass(Integer.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${n}"));
+        columnBinding.setColumnName("N");
+        columnBinding.setColumnClass(Integer.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${rss}"));
+        columnBinding.setColumnName("Rss");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${ssr}"));
+        columnBinding.setColumnName("Ssr");
+        columnBinding.setColumnClass(Double.class);
+        bindingGroup.addBinding(jTableBinding);
+        jTableBinding.bind();
+        jScrollPane3.setViewportView(jTable1);
+
+        jPanel2.add(jScrollPane3);
+
+        jTable2.setRowHeight(25);
+
+        jTableBinding = org.jdesktop.swingbinding.SwingBindings.createJTableBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, listLinear, jTable2);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${sumx}"));
+        columnBinding.setColumnName("Sumx");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${sumx2}"));
+        columnBinding.setColumnName("Sumx2");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${sumy}"));
+        columnBinding.setColumnName("Sumy");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${svar}"));
+        columnBinding.setColumnName("Svar");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${svar0}"));
+        columnBinding.setColumnName("Svar0");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${svar1}"));
+        columnBinding.setColumnName("Svar1");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${xbar}"));
+        columnBinding.setColumnName("Xbar");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${xxbar}"));
+        columnBinding.setColumnName("Xxbar");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${xybar}"));
+        columnBinding.setColumnName("Xybar");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${ybar}"));
+        columnBinding.setColumnName("Ybar");
+        columnBinding.setColumnClass(Double.class);
+        columnBinding = jTableBinding.addColumnBinding(org.jdesktop.beansbinding.ELProperty.create("${yybar}"));
+        columnBinding.setColumnName("Yybar");
+        columnBinding.setColumnClass(Double.class);
+        bindingGroup.addBinding(jTableBinding);
+        jTableBinding.bind();
+        jScrollPane4.setViewportView(jTable2);
+
+        jPanel2.add(jScrollPane4);
 
         jTabbedPane1.addTab("Data Latih Statistik", jPanel2);
 
@@ -128,28 +233,37 @@ public class MainFrame extends javax.swing.JFrame {
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 799, Short.MAX_VALUE)
+            .addGap(0, 819, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 303, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Hasil Prediksi", jPanel3);
+        jTabbedPane1.addTab("Diagram", jPanel3);
 
         getContentPane().add(jTabbedPane1, java.awt.BorderLayout.CENTER);
 
         jPanel5.setLayout(new java.awt.GridLayout(0, 2));
 
-        jButton1.setText("Import Data Latih");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        jButton9.setText("Latih");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                jButton9ActionPerformed(evt);
             }
         });
-        jPanel5.add(jButton1);
+        jPanel5.add(jButton9);
 
-        jButton5.setText("Reset Data Latih");
+        jButton3.setText("Prediksi");
+        jButton3.setEnabled(false);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jPanel5.add(jButton3);
+
+        jButton5.setText("Ambil Data Latih");
         jButton5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton5ActionPerformed(evt);
@@ -157,10 +271,12 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jPanel5.add(jButton5);
 
-        jButton2.setText("Import Data Uji");
-        jPanel5.add(jButton2);
-
-        jButton6.setText("Reset Data Latih");
+        jButton6.setText("Ambil Data Uji");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
         jPanel5.add(jButton6);
 
         jButton8.setText("Data Management");
@@ -179,9 +295,6 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jPanel5.add(jButton4);
 
-        jButton3.setText("Prediksi");
-        jPanel5.add(jButton3);
-
         jButton7.setText("Keluar");
         jPanel5.add(jButton7);
 
@@ -191,50 +304,9 @@ public class MainFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        
-//        int n = 52;
-//        
-//        for (int i = 1; i <= 52; i++) {
-//            DataClass d = new DataClass(i,1d,100d);
-//            listDataLatih.add(d);
-//        }
-        JFileChooser jfc = new JFileChooser();
-        jfc.addChoosableFileFilter(new FileNameExtensionFilter("Train CSV Files", "csv"));
-        int r = jfc.showOpenDialog(null);
-        if (r == JFileChooser.CANCEL_OPTION) {
-            batal(new UnsupportedOperationException("Not supported yet."));
-        }
-        File selectedFile = jfc.getSelectedFile();
-        System.out.println("selectedFile = " + selectedFile);
-        
-           CSVReader reader;
-            try {
-                reader = new CSVReader(new FileReader(selectedFile));
-                CsvToBean<DataClass> dataBean =  new CsvToBeanBuilder
-                    (Files.newBufferedReader(selectedFile.toPath()))
-                    .withType(DataClass.class)
-                    .withIgnoreLeadingWhiteSpace(true)
-                    .build();
-//                    List<Data> parse = dataBean.parse();
-//                    listData.addAll(parse);
-//                System.out.println("listData = " + listData.size());
-            } catch (FileNotFoundException ex) {
-            } catch (IOException ex) {
-            }
-            jTabbedPane1.setEnabledAt(1, true);
-        
-
-    }//GEN-LAST:event_jButton1ActionPerformed
     private void batal(UnsupportedOperationException unsupportedOperationException) {
         JOptionPane.showMessageDialog(null, "Pembatalan Proese Klasifikasi");
     }
-
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        listDataLatih.clear();
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         UserForm.main(null);
@@ -242,8 +314,74 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        DataForm.main(null);
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        List<Data> findDataEntities = dataController.findDataEntities();
+        listData.clear();
+        listData.addAll(findDataEntities);
+        
+    }//GEN-LAST:event_jButton5ActionPerformed
+    private static File getFile(){
+        JFileChooser fc = new JFileChooser();
+        File file = null;
+        fc.addChoosableFileFilter(new FileNameExtensionFilter("Data CSV Files", "csv"));        
+        int returnVal = fc.showOpenDialog(null);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            file = fc.getSelectedFile();  
+        } 
+        return file;
+    }
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        listDataUji.clear();
+        listDataPrediksi.clear();
+        File file = getFile();
+        CSVReader reader;
+        try {
+            reader = new CSVReader(new FileReader(file));
+            CsvToBean<Data> dataBean =
+                new CsvToBeanBuilder
+                    (Files.newBufferedReader(file.toPath()))
+                    .withType(Data.class)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .build();
+            List<Data> parse = dataBean.parse();
+            listDataUji.addAll(parse);            
+            } catch (FileNotFoundException ex) {
+            } catch (IOException ex) {
+            }
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        int i = 1;
+        for (Data data : listDataUji) {
+            i++;
+            data.setDataId(i);
+            data.prediksi(data.getDataX(), linear.getBeta0(), linear.getBeta1());
+            listDataPrediksi.add(data);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    RegresiLinear linear;
+
+    public RegresiLinear getLinear() {
+        return linear;
+    }
+
+    public void setLinear(RegresiLinear linear) {
+        this.linear = linear;
+    }
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        linear = new RegresiLinear(listData);
+        listLinear.add(linear);
+        jButton3.setEnabled(true);
+        
+    }//GEN-LAST:event_jButton9ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -283,24 +421,37 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable TableLatih;
     private javax.swing.JTable TableUji;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
+    private javax.swing.JTable TableUji1;
+    private javax.persistence.Query dataQuery;
+    private javax.persistence.EntityManager entityManager;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
+    private javax.swing.JButton jButton9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private java.util.List<DataClass> listDataLatih;
-    private java.util.List<DataClass> listDataPrediksi;
-    private java.util.List<DataClass> listDataUji;
+    private javax.swing.JTable jTable1;
+    private javax.swing.JTable jTable2;
+    private java.util.List<linearsimple.model.Data> listData;
+    private java.util.List<linearsimple.model.Data> listDataPrediksi;
+    private java.util.List<linearsimple.model.Data> listDataUji;
+    private java.util.List<RegresiLinear> listLinear;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
+    private final DataController dataController = new DataController();
+    private void initSetup() {
+        listDataUji.clear();
+        listDataPrediksi.clear();
+    }
 }
